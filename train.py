@@ -8,7 +8,8 @@ import numpy as np
 import jax
 import jax.numpy as jnp
 from functools import partial
-
+from typing import NamedTuple
+import chex
 
 
 # Haiku-based NN used to learn profiles for Omega and U
