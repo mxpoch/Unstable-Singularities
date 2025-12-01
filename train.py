@@ -163,6 +163,16 @@ def total_loss(trainable_state, rng):
 
 CCF_val_and_grad = jax.jit(jax.value_and_grad(total_loss, argnums=0))
 
+@partial(jax.jit, static_argnames=("optimizer",))
+def adam_train_step(trainable_state, opt_state, rng, optimizer):
+    # Get loss and gradients
+    (loss_val, grads) = CCF_val_and_grad(trainable_state, rng)
+    
+    # Update parameters
+    updates, opt_state = optimizer.update(grads, opt_state)
+    trainable_state = optax.apply_updates(trainable_state, updates)
+    
+    return trainable_state, opt_state, loss_val
 
 class InfoState(NamedTuple):
   iter_num: chex.Numeric
@@ -237,14 +247,11 @@ if __name__ == "__main__":
         key, rng_step = jax.random.split(key)
         trainable_state, opt_state, loss_val = adam_train_step(trainable_state, opt_state, key, adam)
 
-        # updating lambda
-        # dU_dz_0 = dq_dz(trainable_state["U_p"], key, jnp.array(0.0), lambda_val)
-        # lambda_val = jnp.array(-2+2*dU_dz_0)
-
         if i % 1000 == 0:
             print(f"Step {i}, Loss: {loss_val}, Lambda: {trainable_state['lambda']}")
 
     rng_lbfgs = jax.random.key(0)
 
+    # next 250k iterations using L-BFGS
     opt = optax.chain(print_info(), optax.lbfgs())
     final_params, _ = run_opt(trainable_state, lbfgs_loss, opt, max_iter=100, tol=1e-3)
