@@ -10,7 +10,7 @@ import jax.numpy as jnp
 from functools import partial
 from typing import NamedTuple
 import chex
-
+import pickle
 
 # Haiku-based NN used to learn profiles for Omega and U
 # 3 hidden layers with tanh activation functions, and an ELU as the final activation
@@ -255,3 +255,7 @@ if __name__ == "__main__":
     # next 250k iterations using L-BFGS
     opt = optax.chain(print_info(), optax.lbfgs())
     final_params, _ = run_opt(trainable_state, lbfgs_loss, opt, max_iter=100, tol=1e-3)
+
+    with open("params.pkl", "wb") as f:
+        pickle.dump(trainable_state, f)
+
