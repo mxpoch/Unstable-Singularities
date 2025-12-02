@@ -129,27 +129,30 @@ df2_dz_vmap = jax.vmap(df2_dz, in_axes=(None, None, None, 0, None))
 d3f2_dz3_vmap = jax.vmap(d3f2_dz3, in_axes=(None, None, None, 0, None))
 
 def equation_loss(Omega_p, U_p, rng, lambda_val):
-      # first equation condition
-      start_end = jnp.concatenate([jr.uniform(rng, 1, minval=-30, maxval=-20), jr.uniform(rng, 1, minval=20, maxval=30)])
-      colloc_pts_1 = jnp.linspace(start_end[0], start_end[1], 80)
-      colloc_pts_1 = colloc_pts_1.reshape(colloc_pts_1.shape[0],1) # reshaping for batch
-      f1 = jnp.sum(f1_vmap(Omega_p, U_p, rng, colloc_pts_1, lambda_val)**2)/colloc_pts_1.shape[0]
-      
-      # second equation condition
-      start_end = jnp.concatenate([jr.uniform(rng, 1, minval=-30, maxval=-29), jr.uniform(rng, 1, minval=29, maxval=30)])
-      colloc_pts_2 = jnp.linspace(start_end[0], start_end[1], 80)
-      colloc_pts_2 = colloc_pts_2.reshape(colloc_pts_2.shape[0],1)
-      f2 = jnp.sum(f2_vmap(Omega_p, U_p, rng, colloc_pts_2, lambda_val)**2)/colloc_pts_2.shape[0]
-      
-      return (f1+f2)/2
+    # first equation condition
+    start_end = jnp.concatenate([jr.uniform(rng, 1, minval=-30, maxval=-20), jr.uniform(rng, 1, minval=20, maxval=30)])
+    colloc_pts_1 = jnp.linspace(start_end[0], start_end[1], 80)
+    colloc_pts_1 = colloc_pts_1.reshape(colloc_pts_1.shape[0],1) # reshaping for batch
+    f1 = jnp.sum(f1_vmap(Omega_p, U_p, rng, colloc_pts_1, lambda_val)**2)/colloc_pts_1.shape[0]
+    
+    # second equation condition
+    start_end = jnp.concatenate([jr.uniform(rng, 1, minval=-30, maxval=-29), jr.uniform(rng, 1, minval=29, maxval=30)])
+    colloc_pts_2 = jnp.linspace(start_end[0], start_end[1], 80)
+    colloc_pts_2 = colloc_pts_2.reshape(colloc_pts_2.shape[0],1)
+    f2 = jnp.sum(f2_vmap(Omega_p, U_p, rng, colloc_pts_2, lambda_val)**2)/colloc_pts_2.shape[0]
+    
+    return (f1+f2)/2
 
 def smoothness_loss(Omega_p, U_p, rng, lambda_val):
-      colloc_pts = jr.uniform(rng, 80, minval=-1, maxval=1)
-      colloc_pts = colloc_pts.reshape(colloc_pts.shape[0],1) # reshaping for batch
-      # df2_dz to find the first smooth lambda value
-      f1s = 1/colloc_pts.shape[0]*jnp.sum(jnp.abs(df1_dz_vmap(Omega_p, U_p, rng, colloc_pts, lambda_val))**2)
-      f2s = 1/colloc_pts.shape[0]*jnp.sum(jnp.abs(df2_dz_vmap(Omega_p, U_p, rng, colloc_pts, lambda_val))**2)
-      return (f1s+f2s)/2
+    colloc_pts = jr.uniform(rng, 80, minval=-1, maxval=1)
+    colloc_pts = colloc_pts.reshape(colloc_pts.shape[0],1) # reshaping for batch
+    # df2_dz to find the first smooth lambda value
+    f1s = 1/colloc_pts.shape[0]*jnp.sum(jnp.abs(df1_dz_vmap(Omega_p, U_p, rng, colloc_pts, lambda_val))**2)
+    f2s = 1/colloc_pts.shape[0]*jnp.sum(jnp.abs(df2_dz_vmap(Omega_p, U_p, rng, colloc_pts, lambda_val))**2)
+
+    # setting up the 3rd order smoothness loss
+
+    return (f1s+f2s)/2
 
 # TODO - move colloc pt generation outside of loss functions?
 def total_loss(trainable_state, rng):
